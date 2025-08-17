@@ -1,6 +1,3 @@
-import { type User } from 'firebase/auth';
-
-
 export interface GameSettings {
     rounds: number;
     categories: string[];
@@ -29,13 +26,4 @@ export type PlayerAnswers = Record<string, string>;
 export interface AnswerVote {
     voterId: string;
     isValid: boolean;
-}
-
-export interface AppContextType {
-    user: User | null;
-    isLoading: boolean;
-    gameId: string | null;
-    setGameId: (id: string | null) => void;
-    game: Game | null;
-    players: Player[];
 }

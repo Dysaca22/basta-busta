@@ -7,10 +7,9 @@ import { getRandomLetter } from "@utils";
 
 
 export const createGame = async (settings: GameSettings) => {
-    if (!db) throw new Error("Firestore instance is not initialized.");
-    if (!auth) throw new Error("Auth instance is not initialized.");
-
-    if (!auth.currentUser) throw new Error("User not authenticated.");
+    if (!db || !auth || !auth.currentUser) {
+        throw new Error("Authentication or Firestore service is not available.");
+    }
 
     // Validación de la configuración
     if (settings.categories.length === 0 || settings.categories.length > 10) {
@@ -50,7 +49,9 @@ export const startGame = async (gameId: string) => {
 };
 
 export const commitRoundScores = async (gameId: string, currentRound: number, players: Player[]) => {
-    if (!db || !auth || !auth.currentUser) throw new Error("Services not available.");
+    if (!db || !auth || !auth.currentUser) {
+        throw new Error("Authentication or Firestore service is not available.");
+    }
 
     // 1. Obtener todas las respuestas y votos de la ronda
     const answersSnapshot = await getDocs(collection(db, "games", gameId, "rounds", String(currentRound), "answers"));
