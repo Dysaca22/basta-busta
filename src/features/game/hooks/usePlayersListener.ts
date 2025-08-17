@@ -2,8 +2,8 @@
 import { collection, onSnapshot, QuerySnapshot } from "firebase/firestore";
 import { useEffect, useState } from "react";
 
-import { db } from "@services/firebaseService";
-import { type Player } from "@common/types";
+import { db } from "@config/firebase";
+import { type Player } from "@types";
 
 
 export const usePlayersListener = (gameId: string) => {

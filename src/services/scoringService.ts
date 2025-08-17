@@ -1,4 +1,4 @@
-import { type Player } from "@common/types";
+import { type Player } from "@types";
 
 
 type PlayerAnswersData = { playerId: string; answers: Record<string, string> };

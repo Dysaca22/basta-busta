@@ -1,7 +1,7 @@
 import { doc, runTransaction, updateDoc, serverTimestamp, setDoc } from "firebase/firestore";
 
-import { db, auth } from "@services/firebaseService.ts";
-import { type PlayerAnswers } from "@common/types";
+import { type PlayerAnswers } from "@types";
+import { db, auth } from "@config/firebase";
 
 
 export const joinGame = async (gameId: string, playerName: string) => {

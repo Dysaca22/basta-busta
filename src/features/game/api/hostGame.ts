@@ -1,9 +1,9 @@
 import { collection, doc, setDoc, updateDoc, serverTimestamp, getDocs, writeBatch, increment } from "firebase/firestore";
 
-import { type GameSettings, type Player } from "@common/types";
-import { db, auth } from "@services/firebaseService.ts";
-import { calculateRoundScores } from "./scoringGame";
-import { getRandomLetter } from "@common/utils.ts";
+import { calculateRoundScores } from "@services/scoringService";
+import { type GameSettings, type Player } from "@types";
+import { db, auth } from "@config/firebase";
+import { getRandomLetter } from "@utils";
 
 
 export const createGame = async (settings: GameSettings) => {
