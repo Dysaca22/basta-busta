@@ -61,7 +61,7 @@ export const commitRoundScores = async (gameId: string, currentRound: number, pl
 
     for (const answerDoc of answersSnapshot.docs) {
         const playerData = answerDoc.data();
- allAnswers.push({ playerId: answerDoc.id, answers: playerData as Record<string, string> });
+        allAnswers.push({ playerId: answerDoc.id, answers: playerData.answers });
         
         // Por cada respuesta, obtenemos sus votos
         const votesSnapshot = await getDocs(collection(answerDoc.ref, "votes"));
