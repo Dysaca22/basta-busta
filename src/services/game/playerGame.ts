@@ -1,29 +1,113 @@
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, runTransaction, updateDoc, serverTimestamp, setDoc } from "firebase/firestore";
 
 import { db, auth } from "@services/firebaseService.ts";
+import { type PlayerAnswers } from "@common/types";
 
 
 export const joinGame = async (gameId: string, playerName: string) => {
-    if (!db) throw new Error("Firestore instance is not initialized.");
-    if (!auth) throw new Error("Auth instance is not initialized.");
+    if (!db || !auth || !auth.currentUser) {
+        throw new Error("Authentication or Firestore service is not available.");
+    }
 
-    if (!auth.currentUser) throw new Error("User not authenticated.");
-
-    const playerRef = doc(db, "games", gameId, "players", auth.currentUser.uid);
     const gameRef = doc(db, "games", gameId);
+    const playerRef = doc(db, "games", gameId, "players", auth.currentUser.uid);
 
-    // Verifica que el juego exista y no haya comenzado
-    const gameDoc = await getDoc(gameRef);
-    if (!gameDoc.exists()) throw new Error("Game not found.");
-    if (gameDoc.data().status !== "lobby") throw new Error("Game has already started.");
+    try {
+        await runTransaction(db, async (transaction) => {
+            if (!db || !auth || !auth.currentUser) {
+                throw new Error("Authentication or Firestore service is not available.");
+            }
 
-    const playerData = {
-        id: auth.currentUser.uid,
-        name: playerName,
-        isHost: false,
-        score: 0,
-        isReady: false,
-    };
+            const gameDoc = await transaction.get(gameRef);
 
-    await setDoc(playerRef, playerData);
+            if (!gameDoc.exists()) {
+                throw new Error("Game not found.");
+            }
+
+            if (gameDoc.data().status !== "lobby") {
+                throw new Error("Game has already started or finished.");
+            }
+
+            const playerData = {
+                id: auth.currentUser.uid,
+                name: playerName,
+                isHost: false,
+                score: 0,
+                isReady: false,
+            };
+
+            transaction.set(playerRef, playerData);
+        });
+        console.log("Player joined the game successfully!");
+    } catch (error) {
+        console.error("Failed to join game: ", error);
+        throw error;
+    }
+};
+
+export const setPlayerReady = async (gameId: string, isReady: boolean) => {
+    if (!db || !auth || !auth.currentUser) {
+        throw new Error("Authentication or Firestore service is not available.");
+    }
+    const playerRef = doc(db, "games", gameId, "players", auth.currentUser.uid);
+    await updateDoc(playerRef, { isReady });
+};
+
+export const declareBasta = async (gameId: string) => {
+    if (!db || !auth || !auth.currentUser) {
+        throw new Error("Authentication or Firestore service is not available.");
+    }
+    const gameRef = doc(db, "games", gameId);
+    await updateDoc(gameRef, {
+        status: "finished",
+        finishedBy: auth.currentUser.uid,
+        finishedAt: serverTimestamp()
+    });
+};
+
+export const submitAnswers = async (gameId: string, currentRound: number, answers: PlayerAnswers) => {
+    if (!db || !auth || !auth.currentUser) {
+        throw new Error("Authentication or Firestore service is not available.");
+    }
+    
+    const answerRef = doc(
+        db, 
+        "games", gameId, 
+        "rounds", String(currentRound), 
+        "answers", auth.currentUser.uid
+    );
+    
+    await setDoc(answerRef, { 
+        playerId: auth.currentUser.uid,
+        answers 
+    });
+};
+
+export const submitVote = async (
+    gameId: string,
+    currentRound: number,
+    targetPlayerId: string,
+    category: string,
+    isValid: boolean
+) => {
+    if (!db || !auth || !auth.currentUser) {
+        throw new Error("Authentication or Firestore service is not available.");
+    }
+
+    if (auth.currentUser.uid === targetPlayerId) {
+        throw new Error("You cannot vote for your own answers.");
+    }
+
+    const voteRef = doc(
+        db,
+        "games", gameId,
+        "rounds", String(currentRound),
+        "answers", targetPlayerId,
+        "votes", auth.currentUser.uid
+    );
+
+    await setDoc(voteRef, {
+        category,
+        isValid
+    }, { merge: true });
 };

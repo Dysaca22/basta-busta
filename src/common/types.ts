@@ -1,3 +1,8 @@
+export interface GameSettings {
+    rounds: number;
+    categories: string[];
+}
+
 export interface Player {
     id: string;
     name: string;
@@ -7,10 +12,18 @@ export interface Player {
 }
 
 export interface Game {
-    id: string;
-    status: "lobby" | "playing" | "finished";
+    id:string;
+    status: "lobby" | "playing" | "voting" | "finished";
     hostId: string;
-    players: Player[];
     currentLetter: string | null;
-    timestamp: number;
+    currentRound: number;
+    settings: GameSettings;
+    lastActivity: any;
+}
+
+export type PlayerAnswers = Record<string, string>;
+
+export interface AnswerVote {
+    voterId: string;
+    isValid: boolean;
 }

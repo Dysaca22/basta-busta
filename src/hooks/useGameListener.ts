@@ -1,28 +1,26 @@
-import { doc, onSnapshot } from "firebase/firestore";
+// src/hooks/usePlayersListener.ts
+import { collection, onSnapshot, QuerySnapshot } from "firebase/firestore";
 import { useEffect, useState } from "react";
 
 import { db } from "@services/firebaseService";
-import { type Game } from "@common/types";
+import { type Player } from "@common/types";
 
 
-export const useGameListener = (gameId: string) => {
-    const [game, setGame] = useState<Game | null>(null);
+export const usePlayersListener = (gameId: string) => {
+    const [players, setPlayers] = useState<Player[]>([]);
 
     useEffect(() => {
         if (!gameId) return;
 
-        const gameRef = doc(db!, "games", gameId);
+        const playersRef = collection(db!, "games", gameId, "players");
 
-        const unsubscribe = onSnapshot(gameRef, (doc) => {
-            if (doc.exists()) {
-                setGame({ id: doc.id, ...doc.data() } as Game);
-            } else {
-                setGame(null); // Juego no encontrado
-            }
+        const unsubscribe = onSnapshot(playersRef, (snapshot: QuerySnapshot) => {
+            const playersData = snapshot.docs.map(doc => doc.data() as Player);
+            setPlayers(playersData);
         });
 
-        return () => unsubscribe(); // Limpia el listener cuando el componente se desmonta
+        return () => unsubscribe(); // Limpia el listener al desmontar
     }, [gameId]);
 
-    return game;
+    return players;
 };
