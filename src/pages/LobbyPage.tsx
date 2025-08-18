@@ -13,6 +13,15 @@ const LobbyPage = () => {
     const navigate = useNavigate();
     const [showKickedModal, setShowKickedModal] = useState(false);
 
+    // SOLUCIÓN: Este efecto se ejecuta en todos los clientes.
+    // Cuando el estado del juego cambia a 'playing', todos navegan a la partida.
+    useEffect(() => {
+        if (game?.status === 'playing' && gameId) {
+            navigate(`/party?game=${gameId}`);
+        }
+    }, [game?.status, gameId, navigate]);
+
+
     useEffect(() => {
         if (game && user && players.length > 0 && !players.some(p => p.id === user.uid)) {
             setShowKickedModal(true);
@@ -51,10 +60,9 @@ const LobbyPage = () => {
     };
 
     const handleStartGame = () => {
+        // La navegación ya no se hace aquí, solo se cambia el estado.
         if (isHost && allPlayersReady) {
-            startGame(gameId).then(() => {
-                navigate(`/party?game=${gameId}`);
-            });
+            startGame(gameId);
         }
     };
 
