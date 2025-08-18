@@ -4,6 +4,7 @@ import { type User } from 'firebase/auth';
 export interface GameSettings {
     rounds: number;
     categories: string[];
+    roundTime: number;
 }
 
 export interface Game {

@@ -21,7 +21,7 @@ const HomePage = () => {
         try {
             await signInAnonymouslyIfNeeded(playerName);
             // Aquí iría la lógica para configurar las opciones del juego (rondas, categorías)
-            const settings = { rounds: 3, categories: ["Nombre", "Ciudad", "Animal"] }; // Ejemplo
+            const settings = { rounds: 3, categories: ["Nombre", "Ciudad", "Animal"], roundTime: 60 };
             const newGameId = await createGame(settings, playerName);
             navigate(`/lobby?game=${newGameId}`);
         } catch (error) {

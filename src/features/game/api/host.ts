@@ -1,4 +1,4 @@
-import { doc, runTransaction, serverTimestamp, collection, getDocs, writeBatch, increment, updateDoc } from "firebase/firestore";
+import { doc, runTransaction, serverTimestamp, collection, getDocs, writeBatch, increment, updateDoc, deleteDoc } from "firebase/firestore";
 
 import { calculateRoundScores } from "@services/scoringService";
 import { getRandomLetter, generateGameId } from "@utils";
@@ -106,4 +106,19 @@ export const commitRoundScores = async (gameId: string, currentRound: number, pl
     }
 
     await batch.commit();
+};
+
+export const updateGameSettings = async (gameId: string, newSettings: GameSettings) => {
+    if (!db || !auth || !auth.currentUser) throw new Error("Services not available.");
+
+    // Aquí puedes añadir validaciones más robustas para los settings
+    const gameRef = doc(db, "games", gameId);
+    await updateDoc(gameRef, { settings: newSettings });
+};
+
+export const kickPlayer = async (gameId: string, playerIdToKick: string) => {
+    if (!db || !auth || !auth.currentUser) throw new Error("Services not available.");
+
+    const playerRef = doc(db, "games", gameId, "players", playerIdToKick);
+    await deleteDoc(playerRef); // Simplemente eliminamos el documento del jugador
 };
