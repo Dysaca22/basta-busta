@@ -44,9 +44,19 @@ export interface AppContextType {
 export type Language = 'es' | 'en';
 
 export interface KeyBindings {
-    openMaldades: string;
-    buyMaldad: string[];
+    openMaldades: any;
+    hojaTembloza: any;
+    borrarRespuesta: any;
+    pantallaBorrosa: any;
+    relojAcelerado: any;
+    cambioPsicodelico: any;
+    stopFalso: any;
+    copiarRespuesta: any;
+    roboDeHoja: any;
+    escudoContraMaldades: any;
+    romperMina: any;
 }
+
 
 export interface Settings {
     language: Language;
@@ -56,8 +66,9 @@ export interface Settings {
 export interface SettingsContextType {
     settings: Settings;
     setLanguage: (language: Language) => void;
-    setKeyBinding: (action: keyof KeyBindings, key: string | string[]) => void;
+    setKeyBinding: (action: keyof KeyBindings, key: string) => void;
 }
+
 
 export interface SettingsModalProps {
     isOpen: boolean;

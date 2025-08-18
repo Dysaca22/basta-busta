@@ -1,27 +1,28 @@
 import { createContext, useContext, useMemo, type ReactNode, useCallback } from 'react';
-import { useLocalStorage } from '@hooks/useLocalStorage';
-
 import { type Language, type KeyBindings, type Settings, type SettingsContextType } from "@types";
+import { useLocalStorage } from '@hooks/useLocalStorage';
+import { defaultSettings } from '@config/keys';
 
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
-const defaultSettings: Settings = {
-    language: 'es',
-    keyBindings: {
-        openMaldades: 'Tab',
-        buyMaldad: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
-    },
-};
-
 export const SettingsProvider = ({ children }: { children: ReactNode }) => {
-    const [settings, setSettings] = useLocalStorage<Settings>('/Users/runner/work/basta-busta/basta-busta/bastaBustaSettings', defaultSettings);
+    const [settings, setSettings] = useLocalStorage<Settings>('bastaBustaSettings', defaultSettings);
 
     const setLanguage = useCallback((language: Language) => {
         setSettings(prev => ({ ...prev, language }));
-    }, []);
+    }, [setSettings]);
 
-    const setKeyBinding = useCallback((action: keyof KeyBindings, key: string | string[]) => {
+    const setKeyBinding = useCallback((action: keyof KeyBindings, key: string) => {
+        // Regla: No permitir letras para las "maldades"
+        const isMaldadKey = action !== 'openMaldades';
+        const isLetter = /^[A-Z]$/i.test(key);
+
+        if (isMaldadKey && isLetter) {
+            alert("No se pueden asignar letras a las maldades, solo números o símbolos.");
+            return; // No actualiza el estado si la regla no se cumple
+        }
+
         setSettings(prev => ({
             ...prev,
             keyBindings: { ...prev.keyBindings, [action]: key },
