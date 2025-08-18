@@ -1,13 +1,45 @@
 import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 
-import { startGame, kickPlayer } from '@features/game/api/host';
-import { setPlayerReady } from '@features/game/api/player';
+
+import { startGame, kickPlayer, updateGameSettings } from '@features/game/api/host';
+import GameSettingsForm from '@components/ui/GameSettingsForm';
+import { setPlayerReady, leaveGame  } from '@features/game/api/player';
 import { useAppContext } from '@contexts/AppContext';
-
+import Modal from '@components/common/Modal';
 
 const LobbyPage = () => {
     const { game, players, user, gameId } = useAppContext();
     const navigate = useNavigate();
+
+    const [showKickedModal, setShowKickedModal] = useState(false);
+
+    // Efecto para detectar si el jugador actual ha sido expulsado
+    useEffect(() => {
+        if (game && user && players.length > 0 && !players.some(p => p.id === user.uid)) {
+            setShowKickedModal(true);
+        }
+    }, [players, game, user]);
+
+    useEffect(() => {
+        setShowKickedModal(false);
+    }, [gameId]);
+
+    const handleModalClose = () => {
+        setShowKickedModal(false);
+        navigate('/');
+    };
+
+    const handleLeaveGame = async () => {
+        if (gameId) {
+            await leaveGame(gameId);
+            navigate('/');
+        }
+    };
+
+    if (!game || !user || !gameId) {
+        return <div>Cargando lobby...</div>;
+    }
 
     if (!game || !user || !gameId) {
         return <div>Cargando lobby...</div>;
@@ -16,8 +48,9 @@ const LobbyPage = () => {
     const isHost = user.uid === game.hostId;
     const currentPlayer = players.find(p => p.id === user.uid);
 
-    // Lógica para el botón de Iniciar Partida del Host
-    const allPlayersReady = players.length > 1 && players.every(p => p.isReady);
+    // LÓGICA CORREGIDA: Filtramos al host antes de verificar si todos están listos.
+    const nonHostPlayers = players.filter(p => !p.isHost);
+    const allPlayersReady = nonHostPlayers.length > 0 && nonHostPlayers.every(p => p.isReady);
 
     const handleReadyClick = async () => {
         if (currentPlayer) {
@@ -38,8 +71,34 @@ const LobbyPage = () => {
         }
     }
 
+    // Aquí iría la lógica para que el host actualice los settings
+    const handleSettingsChange = async (newSettings: any) => {
+        if (isHost) {
+            // Se necesitaría un formulario para construir el objeto newSettings
+            // await updateGameSettings(gameId, newSettings);
+        }
+    }
+
     return (
         <div className="p-4">
+            <Modal
+                isOpen={showKickedModal}
+                title="Has sido expulsado"
+                onClose={handleModalClose}
+            >
+                <p>El anfitrión te ha expulsado de la partida.</p>
+            </Modal>
+
+            <div className="flex justify-between items-center mb-4">
+                <h1 className="text-3xl font-bold">Lobby</h1>
+                {/* Botón para salir, visible para todos menos el host */}
+                {!isHost && (
+                    <button onClick={handleLeaveGame} className="bg-red-600 hover:bg-red-800 text-white font-bold py-2 px-4 rounded">
+                        Salir de la Sala
+                    </button>
+                )}
+            </div>
+
             <h1 className="text-3xl font-bold text-center mb-4">Lobby de la Partida</h1>
             <p className="text-center mb-6">Comparte este ID: <span className="font-bold text-xl text-yellow-400">{game.id}</span></p>
 
@@ -52,7 +111,7 @@ const LobbyPage = () => {
                             <li key={player.id} className="flex items-center justify-between mb-2 p-2 bg-gray-700 rounded">
                                 <span>{player.name} {player.isHost ? '👑' : ''}</span>
                                 <div className="flex items-center">
-                                    <span className="mr-4">{player.isReady ? '✅ Listo' : '⏳ Esperando'}</span>
+                                    {!player.isHost && <span className="mr-4">{player.isReady ? '✅ Listo' : '⏳ Esperando'}</span>}
                                     {isHost && player.id !== user.uid && (
                                         <button onClick={() => handleKickPlayer(player.id)} className="bg-red-600 hover:bg-red-800 text-white px-2 py-1 rounded text-xs">Expulsar</button>
                                     )}
@@ -66,9 +125,8 @@ const LobbyPage = () => {
                 <div className="bg-gray-800 p-4 rounded-lg">
                     <h2 className="text-2xl font-semibold mb-4">Opciones</h2>
                     {isHost ? (
-                        <div>
-                            {/* Aquí iría la UI para editar rondas, categorías y tiempo */}
-                            <p className="text-sm mb-4">La configuración de la partida se edita aquí.</p>
+                        <div className="space-y-4">
+                            <GameSettingsForm gameId={gameId} currentSettings={game.settings} />
                             <button
                                 onClick={handleStartGame}
                                 disabled={!allPlayersReady}

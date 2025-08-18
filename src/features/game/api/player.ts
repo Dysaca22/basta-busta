@@ -1,4 +1,4 @@
-import { doc, runTransaction, updateDoc, serverTimestamp, setDoc } from "firebase/firestore";
+import { doc, runTransaction, updateDoc, serverTimestamp, setDoc, deleteDoc } from "firebase/firestore";
 
 import { type PlayerAnswers } from "@types";
 import { db, auth } from "@config/firebase";
@@ -110,4 +110,12 @@ export const submitVote = async (
         category,
         isValid
     }, { merge: true });
+};
+
+export const leaveGame = async (gameId: string) => {
+    if (!db || !auth || !auth.currentUser) {
+        throw new Error("Services not available.");
+    }
+    const playerRef = doc(db, "games", gameId, "players", auth.currentUser.uid);
+    await deleteDoc(playerRef);
 };
