@@ -2,14 +2,18 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 
 import { signInAnonymouslyIfNeeded } from "@features/auth/api";
+import SettingsModal from "@components/common/SettingsModal";
+import { useLocalStorage } from "@hooks/useLocalStorage";
+import settingsIcon from '@assets/icons/settings.svg';
 import { createGame } from "@features/game/api/host";
 import { joinGame } from "@features/game/api/player";
 
 
 const HomePage = () => {
-    const [playerName, setPlayerName] = useState("");
+    const [playerName, setPlayerName] = useLocalStorage("playerName", "");
     const [gameIdToJoin, setGameIdToJoin] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const navigate = useNavigate();
 
     const handleCreateGame = async () => {
@@ -20,7 +24,6 @@ const HomePage = () => {
         setIsLoading(true);
         try {
             await signInAnonymouslyIfNeeded(playerName);
-            // Aquí iría la lógica para configurar las opciones del juego (rondas, categorías)
             const settings = { rounds: 3, categories: ["Nombre", "Ciudad", "Animal"], roundTime: 60 };
             const newGameId = await createGame(settings, playerName);
             navigate(`/lobby?game=${newGameId}`);
@@ -40,7 +43,7 @@ const HomePage = () => {
         setIsLoading(true);
         try {
             await signInAnonymouslyIfNeeded(playerName);
-            await joinGame(gameIdToJoin, playerName); // joinGame necesita el nombre
+            await joinGame(gameIdToJoin, playerName);
             navigate(`/lobby?game=${gameIdToJoin}`);
         } catch (error) {
             console.error("Error al unirse a la partida:", error);
@@ -51,38 +54,47 @@ const HomePage = () => {
     };
 
     return (
-        <div className="flex flex-col items-center justify-center h-screen">
-            <h1 className="text-5xl font-bold mb-8">Basta! Busta!</h1>
-            
-            <div className="w-full max-w-sm">
-                <input
-                    type="text"
-                    value={playerName}
-                    onChange={(e) => setPlayerName(e.target.value)}
-                    placeholder="Tu nombre de jugador"
-                    className="w-full px-4 py-2 mb-4 text-black rounded"
-                    disabled={isLoading}
-                />
-
-                <button onClick={handleCreateGame} disabled={isLoading} className="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-2">
-                    {isLoading ? "Creando..." : "Crear Partida"}
+        <>
+            <div className="absolute top-4 right-4">
+                <button onClick={() => setIsSettingsOpen(true)} className="p-2 rounded-full hover:bg-gray-700">
+                    <img src={settingsIcon} alt="Settings" className="w-10 h-10" />
                 </button>
+            </div>
 
-                <div className="flex items-center mt-4">
+            <div className="flex flex-col items-center justify-center h-screen">
+                <h1 className="text-5xl font-bold mb-8">Basta! Busta!</h1>
+
+                <div className="w-full max-w-sm">
                     <input
                         type="text"
-                        value={gameIdToJoin}
-                        onChange={(e) => setGameIdToJoin(e.target.value)}
-                        placeholder="ID de la partida"
-                        className="w-full px-4 py-2 text-black rounded-l"
+                        value={playerName}
+                        onChange={(e) => setPlayerName(e.target.value)}
+                        placeholder="Tu nombre de jugador"
+                        className="w-full px-4 py-2 mb-4 text-black rounded"
                         disabled={isLoading}
                     />
-                    <button onClick={handleJoinGame} disabled={isLoading} className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-r">
-                        Unirse
+
+                    <button onClick={handleCreateGame} disabled={isLoading} className="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-2">
+                        {isLoading ? "Creando..." : "Crear Partida"}
                     </button>
+
+                    <div className="flex items-center mt-4">
+                        <input
+                            type="text"
+                            value={gameIdToJoin}
+                            onChange={(e) => setGameIdToJoin(e.target.value)}
+                            placeholder="ID de la partida"
+                            className="w-full px-4 py-2 text-black rounded-l"
+                            disabled={isLoading}
+                        />
+                        <button onClick={handleJoinGame} disabled={isLoading} className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-r">
+                            Unirse
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
+            <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+        </>
     );
 };
 

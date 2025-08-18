@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, useSearchParams } from 'react-router-dom'
 import { useEffect, type ReactNode } from 'react';
 
 import { AppProvider, useAppContext } from '@contexts/AppContext';
+import { SettingsProvider } from '@contexts/SettingsContext';
 import LobbyPage from '@pages/LobbyPage';
 import PartyPage from '@pages/PartyPage';
 import HomePage from '@pages/HomePage';
@@ -13,10 +14,7 @@ const GameIdSetter = ({ children }: { children: ReactNode }) => {
   const gameIdFromUrl = searchParams.get('game');
 
   useEffect(() => {
-    // Sincroniza el gameId de la URL con el estado global
     setGameId(gameIdFromUrl);
-
-    // Función de limpieza para cuando el componente se desmonte (el usuario navega a otra parte)
     return () => {
       setGameId(null);
     };
@@ -57,15 +55,15 @@ function AppRoutes() {
 
 function App() {
   return (
-    // El BrowserRouter DEBE envolver al AppProvider para que los hooks de enrutamiento
-    // estén disponibles en todo el contexto de la aplicación.
     <BrowserRouter>
       <AppProvider>
-        <div className="bg-gray-900 text-white min-h-screen font-sans">
-          <main className="container mx-auto p-4">
-            <AppRoutes />
-          </main>
-        </div>
+        <SettingsProvider>
+          <div className="bg-gray-900 text-white min-h-screen font-sans">
+            <main className="container mx-auto p-4">
+              <AppRoutes />
+            </main>
+          </div>
+        </SettingsProvider>
       </AppProvider>
     </BrowserRouter>
   );

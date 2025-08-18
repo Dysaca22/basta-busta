@@ -40,3 +40,26 @@ export interface AppContextType {
     game: Game | null;
     players: Player[];
 }
+
+export type Language = 'es' | 'en';
+
+export interface KeyBindings {
+    openMaldades: string;
+    buyMaldad: string[];
+}
+
+export interface Settings {
+    language: Language;
+    keyBindings: KeyBindings;
+}
+
+export interface SettingsContextType {
+    settings: Settings;
+    setLanguage: (language: Language) => void;
+    setKeyBinding: (action: keyof KeyBindings, key: string | string[]) => void;
+}
+
+export interface SettingsModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+}
