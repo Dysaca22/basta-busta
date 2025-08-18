@@ -1,5 +1,6 @@
 import { type User } from 'firebase/auth';
 
+// --- TIPOS DE JUEGO ---
 
 export interface GameSettings {
     rounds: number;
@@ -15,6 +16,7 @@ export interface Game {
     currentRound: number;
     settings: GameSettings;
     lastActivity: any;
+    finishedBy?: string;
 }
 
 export interface Player {
@@ -27,10 +29,30 @@ export interface Player {
 
 export type PlayerAnswers = Record<string, string>;
 
-export interface AnswerVote {
-    voterId: string;
-    isValid: boolean;
+// --- TIPOS DE VOTACIÓN Y PUNTUACIÓN (ACTUALIZADOS) ---
+
+export type VoteType = 'good' | 'bad' | 'great';
+
+// Define los votos de un solo votante para múltiples categorías
+export type VotesByCategory = Record<string, VoteType>;
+
+// Define todos los votos para las respuestas de un jugador, organizados por ID del votante
+export type AllVotesForPlayer = Record<string, VotesByCategory>;
+
+export interface PlayerRoundData {
+    playerId: string;
+    answers: PlayerAnswers;
+    votes: AllVotesForPlayer;
 }
+
+export interface RoundData {
+    answers: {
+        [playerId: string]: PlayerRoundData;
+    };
+}
+
+
+// --- TIPOS DE CONTEXTO Y CONFIGURACIÓN ---
 
 export interface AppContextType {
     user: User | null;

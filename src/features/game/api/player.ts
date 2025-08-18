@@ -1,6 +1,6 @@
 import { doc, runTransaction, updateDoc, serverTimestamp, setDoc, deleteDoc } from "firebase/firestore";
 
-import { type PlayerAnswers } from "@types";
+import { type PlayerAnswers, type VoteType } from "@types";
 import { db, auth } from "@config/firebase";
 
 
@@ -89,7 +89,7 @@ export const submitVote = async (
     currentRound: number,
     targetPlayerId: string,
     category: string,
-    isValid: boolean
+    vote: VoteType // Actualizado de boolean a VoteType
 ) => {
     if (!db || !auth || !auth.currentUser) {
         throw new Error("Authentication or Firestore service is not available.");
@@ -98,7 +98,7 @@ export const submitVote = async (
     if (auth.currentUser.uid === targetPlayerId) {
         throw new Error("You cannot vote for your own answers.");
     }
-
+    
     const voteRef = doc(
         db,
         "games", gameId,
@@ -107,9 +107,10 @@ export const submitVote = async (
         "votes", auth.currentUser.uid
     );
 
+    // Guardamos el voto para una categoría específica
+    const fieldPath = `votes.${category}`;
     await setDoc(voteRef, {
-        category,
-        isValid
+        [fieldPath]: vote
     }, { merge: true });
 };
 

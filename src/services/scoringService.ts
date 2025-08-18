@@ -1,59 +1,62 @@
-import { type Player } from "@types";
+import { type Player, type RoundData, type VoteType } from "@types";
 
-
-type PlayerAnswersData = { playerId: string; answers: Record<string, string> };
-type VoteData = { isValid: boolean };
 
 export const calculateRoundScores = (
     players: Player[],
-    allAnswers: PlayerAnswersData[],
-    allVotes: Record<string, VoteData[]>
+    roundData: RoundData
 ): Record<string, number> => {
+    const playerIds = players.map(p => p.id);
     const roundScores: Record<string, number> = {};
-    players.forEach(p => roundScores[p.id] = 0);
+    playerIds.forEach(id => roundScores[id] = 0);
 
-    const validAnswersByCategory: Record<string, string[]> = {};
+    const allAnswers = Object.values(roundData.answers);
+    const categories = Object.keys(allAnswers[0]?.answers || {});
 
-    // 1. Determinar qué respuestas son válidas según los votos
-    allAnswers.forEach(playerAnswer => {
-        const playerId = playerAnswer.playerId;
-        for (const category in playerAnswer.answers) {
-            const answerText = playerAnswer.answers[category];
-            if (!answerText) continue;
+    categories.forEach(category => {
+        const categoryAnswers: { playerId: string, answer: string }[] = [];
 
-            // Construir el identificador único para esta respuesta y categoría
-            const voteKey = `${playerId}_${category}`;
-            const votesForThisAnswer = allVotes[voteKey] || [];
+        // 1. Filtrar respuestas válidas para la categoría actual
+        allAnswers.forEach(playerData => {
+            const answerText = playerData.answers[category]?.trim().toLowerCase();
+            if (!answerText) return;
 
-            const positiveVotes = votesForThisAnswer.filter(v => v.isValid).length;
-            const negativeVotes = votesForThisAnswer.length - positiveVotes;
+            const voters = players.filter(p => p.id !== playerData.playerId);
+            if (voters.length === 0) return; // No se puede calificar si no hay otros jugadores
 
-            if (positiveVotes > negativeVotes) {
-                if (!validAnswersByCategory[category]) {
-                    validAnswersByCategory[category] = [];
+            let totalVoteValue = 0;
+            voters.forEach(voter => {
+                const vote = playerData.votes[voter.id]?.[category] as VoteType;
+                if (vote === 'good' || vote === 'great') {
+                    totalVoteValue += 1;
                 }
-                validAnswersByCategory[category].push(answerText.trim().toLowerCase());
+            });
+
+            // Una respuesta es válida si más de la mitad de los votantes la aprueban
+            if (totalVoteValue / voters.length > 0.5) {
+                categoryAnswers.push({ playerId: playerData.playerId, answer: answerText });
             }
-        }
-    });
+        });
 
-    // 2. Asignar puntos basados en las respuestas válidas
-    allAnswers.forEach(playerAnswer => {
-        const playerId = playerAnswer.playerId;
-        for (const category in playerAnswer.answers) {
-            const answerText = playerAnswer.answers[category]?.trim().toLowerCase();
-            if (!answerText) continue;
+        // 2. Calcular puntos para las respuestas válidas
+        categoryAnswers.forEach(({ playerId, answer }) => {
+            const occurrences = categoryAnswers.filter(a => a.answer === answer).length;
+            const basePoints = occurrences === 1 ? 100 : 50;
+            
+            let finalPoints = 0;
+            const voters = players.filter(p => p.id !== playerId);
+            const voteValuePerPlayer = basePoints / voters.length;
 
-            const validAnswersInCat = validAnswersByCategory[category] || [];
-            if (!validAnswersInCat.includes(answerText)) continue;
-
-            const occurrences = validAnswersInCat.filter(a => a === answerText).length;
-            if (occurrences === 1) {
-                roundScores[playerId] += 100;
-            } else {
-                roundScores[playerId] += 50;
-            }
-        }
+            voters.forEach(voter => {
+                const vote = roundData.answers[playerId].votes[voter.id]?.[category] as VoteType;
+                if (vote === 'good') {
+                    finalPoints += voteValuePerPlayer;
+                } else if (vote === 'great') {
+                    finalPoints += voteValuePerPlayer + 50; // Bonus de 50 por voto "Genial"
+                }
+            });
+            
+            roundScores[playerId] += Math.round(finalPoints);
+        });
     });
 
     return roundScores;
