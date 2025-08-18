@@ -1,10 +1,11 @@
 import { createContext, useContext, useMemo, type ReactNode, useCallback } from 'react';
+
 import { type Language, type KeyBindings, type Settings, type SettingsContextType } from "@types";
 import { useLocalStorage } from '@hooks/useLocalStorage';
 import { defaultSettings } from '@config/keys';
 
-
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
+
 
 export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     const [settings, setSettings] = useLocalStorage<Settings>('bastaBustaSettings', defaultSettings);
@@ -14,20 +15,25 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     }, [setSettings]);
 
     const setKeyBinding = useCallback((action: keyof KeyBindings, key: string) => {
-        // Regla: No permitir letras para las "maldades"
+        const currentBindings = Object.values(settings.keyBindings);
+        if (currentBindings.includes(key)) {
+            alert(`La tecla "${key}" ya está asignada a otra acción.`);
+            return;
+        }
+
         const isMaldadKey = action !== 'openMaldades';
-        const isLetter = /^[A-Z]$/i.test(key);
+        const isLetter = /^[a-zA-Z]$/.test(key);
 
         if (isMaldadKey && isLetter) {
             alert("No se pueden asignar letras a las maldades, solo números o símbolos.");
-            return; // No actualiza el estado si la regla no se cumple
+            return;
         }
 
         setSettings(prev => ({
             ...prev,
             keyBindings: { ...prev.keyBindings, [action]: key },
         }));
-    }, [setSettings]);
+    }, [setSettings, settings.keyBindings]);
 
     const value = useMemo(() => ({
         settings,

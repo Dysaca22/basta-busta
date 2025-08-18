@@ -15,15 +15,9 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
             if (!bindingKey) return;
 
             event.preventDefault();
-            let key = event.key;
-
-            // Para teclas especiales, usamos su nombre. Para el resto, su valor.
-            if (key.length > 1 && key !== 'Tab') {
-                key = key.toUpperCase();
-            }
-
+            const key = event.key === ' ' ? 'Space' : event.key;
             setKeyBinding(bindingKey, key);
-            setBindingKey(null); // Finaliza el modo de escucha
+            setBindingKey(null);
         };
 
         if (bindingKey) {
@@ -35,28 +29,26 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
         };
     }, [bindingKey, setKeyBinding]);
 
-
     const renderKeybindingButton = (action: keyof KeyBindings, label: string) => {
         const isBinding = bindingKey === action;
         return (
-            <div key={action} className="flex items-center justify-between">
-                <label className="text-sm text-gray-400">{label}</label>
+            <div key={action} className="flex items-center justify-between p-2 rounded-md hover:bg-gray-700">
+                <label className="text-sm text-gray-300">{label}</label>
                 <button
                     onClick={() => setBindingKey(action)}
-                    className="w-32 bg-gray-700 p-2 text-center rounded border border-gray-600 hover:bg-gray-600 font-mono"
+                    className="w-36 bg-gray-600 p-2 text-center rounded border border-gray-500 hover:bg-gray-500 font-mono text-white transition-colors"
                 >
-                    {isBinding ? 'Presiona una tecla...' : settings.keyBindings[action]}
+                    {isBinding ? 'Esperando tecla...' : String(settings.keyBindings[action])}
                 </button>
             </div>
         );
     };
 
-
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="Configuración">
             <div className="space-y-6">
                 <div>
-                    <label htmlFor="language" className="block text-sm font-medium text-gray-400 mb-2">
+                    <label htmlFor="language" className="block text-sm font-medium text-gray-300 mb-2">
                         Idioma
                     </label>
                     <select
@@ -70,11 +62,10 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
                     </select>
                 </div>
                 <div>
-                    <h3 className="text-lg font-semibold mb-3">Teclas de Juego</h3>
+                    <h3 className="text-lg font-semibold mb-3 border-b border-gray-600 pb-2">Teclas de Juego</h3>
                     <div className="space-y-2">
                         {renderKeybindingButton('openMaldades', 'Abrir Maldades')}
-
-                        <h4 className="text-md font-semibold pt-2">Maldades</h4>
+                        <h4 className="text-md font-semibold pt-3">Maldades</h4>
                         {Object.entries(maldadLabels).map(([key, label]) =>
                             renderKeybindingButton(key as keyof KeyBindings, label)
                         )}

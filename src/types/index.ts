@@ -44,17 +44,17 @@ export interface AppContextType {
 export type Language = 'es' | 'en';
 
 export interface KeyBindings {
-    openMaldades: any;
-    hojaTembloza: any;
-    borrarRespuesta: any;
-    pantallaBorrosa: any;
-    relojAcelerado: any;
-    cambioPsicodelico: any;
-    stopFalso: any;
-    copiarRespuesta: any;
-    roboDeHoja: any;
-    escudoContraMaldades: any;
-    romperMina: any;
+    openMaldades: string;
+    hojaTembloza: string | number;
+    borrarRespuesta: string | number;
+    pantallaBorrosa: string | number;
+    relojAcelerado: string | number;
+    cambioPsicodelico: string | number;
+    stopFalso: string | number;
+    copiarRespuesta: string | number;
+    roboDeHoja: string | number;
+    escudoContraMaldades: string | number;
+    romperMina: string | number;
 }
 
 
