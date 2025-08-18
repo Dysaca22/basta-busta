@@ -58,8 +58,9 @@ export const declareBasta = async (gameId: string) => {
         throw new Error("Authentication or Firestore service is not available.");
     }
     const gameRef = doc(db, "games", gameId);
+    
     await updateDoc(gameRef, {
-        status: "finished",
+        status: "voting",
         finishedBy: auth.currentUser.uid,
         finishedAt: serverTimestamp()
     });
