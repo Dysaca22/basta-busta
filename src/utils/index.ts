@@ -6,3 +6,7 @@ export function getRandomLetter() {
     const randomIndex = Math.floor(Math.random() * letters.length);
     return letters[randomIndex];
 }
+
+export const generateGameId = (): string => {
+    return Math.floor(10000 + Math.random() * 90000).toString();
+}

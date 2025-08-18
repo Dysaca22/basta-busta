@@ -6,22 +6,22 @@ export interface GameSettings {
     categories: string[];
 }
 
-export interface Player {
-    id: string;
-    name: string;
-    isHost: boolean;
-    score: number;
-    isReady: boolean;
-}
-
 export interface Game {
-    id:string;
+    id: string;
     status: "lobby" | "playing" | "voting" | "finished";
     hostId: string;
     currentLetter: string | null;
     currentRound: number;
     settings: GameSettings;
     lastActivity: any;
+}
+
+export interface Player {
+    id: string;
+    name: string;
+    isHost: boolean;
+    score: number;
+    isReady: boolean;
 }
 
 export type PlayerAnswers = Record<string, string>;
