@@ -4,7 +4,7 @@ import { useState } from "react";
 import { signInAnonymouslyIfNeeded } from "@features/auth/api";
 import SettingsModal from "@components/common/SettingsModal";
 import { useLocalStorage } from "@hooks/useLocalStorage";
-import settingsIcon from '@assets/icons/settings.svg';
+import settingsIcon from '@assets/icons/settings.png';
 import { createGame } from "@features/game/api/host";
 import { joinGame } from "@features/game/api/player";
 
@@ -56,8 +56,8 @@ const HomePage = () => {
     return (
         <>
             <div className="absolute top-4 right-4">
-                <button onClick={() => setIsSettingsOpen(true)} className="p-2 rounded-full hover:bg-gray-700">
-                    <img src={settingsIcon} alt="Settings" className="w-10 h-10" />
+                <button onClick={() => setIsSettingsOpen(true)} className="p-2 rounded-full hover:bg-gray-700 w-4 h-4">
+                    <img src={settingsIcon} alt="Settings" className="w-4 h-4" />
                 </button>
             </div>
 
