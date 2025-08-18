@@ -1,10 +1,13 @@
-import { useState } from 'react';
+import { useState } from "react";
 
-import { declareBasta, submitAnswers } from '@features/game/api/player';
-import { useAppContext } from '@contexts/AppContext';
-import AnswerForm from '@components/game/AnswerForm';
-import { type PlayerAnswers } from '@types';
-import Timer from '@components/game/Timer';
+import { declareBasta, submitAnswers } from "@features/game/api/player";
+import ResultsPhase from "@components/game/ResultsPhase";
+import VotingPhase from "@components/game/VotingPhase";
+import { useAppContext } from "@contexts/AppContext";
+import AnswerForm from "@components/game/AnswerForm";
+import { type PlayerAnswers } from "@types";
+import Timer from "@components/game/Timer";
+
 
 const PartyPage = () => {
     const { game, user, gameId } = useAppContext();
@@ -16,12 +19,10 @@ const PartyPage = () => {
 
         setIsSubmitting(true);
         try {
-            // Se envían las respuestas y luego se declara el basta
             await submitAnswers(gameId, game.currentRound, currentAnswers);
             await declareBasta(gameId);
         } catch (error) {
             console.error("Error al finalizar la ronda:", error);
-            // Aquí se podría mostrar un mensaje de error al usuario
         } finally {
             setIsSubmitting(false);
         }
@@ -39,9 +40,8 @@ const PartyPage = () => {
         return <div>Cargando partida...</div>;
     }
 
-    // Renderiza diferentes componentes según el estado del juego
     switch (game.status) {
-        case 'playing':
+        case "playing":
             return (
                 <div>
                     <h1 className="text-2xl font-bold text-center mb-4">
@@ -63,18 +63,16 @@ const PartyPage = () => {
                         disabled={isSubmitting}
                         className="w-full mt-4 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
                     >
-                        {isSubmitting ? 'Enviando...' : '¡Basta!'}
+                        {isSubmitting ? "Enviando..." : "¡Basta!"}
                     </button>
                 </div>
             );
 
-        case 'voting':
-            // Placeholder para la siguiente fase
-            return <div>Fase de votación...</div>;
+        case "voting":
+            return <VotingPhase />;
 
-        case 'finished':
-            // Placeholder para el final del juego
-            return <div>¡Partida finalizada!</div>;
+        case "finished":
+            return <ResultsPhase />;
 
         default:
             return <div>Esperando a que inicie la partida...</div>;

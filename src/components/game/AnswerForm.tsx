@@ -1,42 +1,47 @@
-import { useState } from 'react';
-
-import { type PlayerAnswers } from '@types';
+import { type PlayerAnswers } from "@types";
 
 
 interface AnswerFormProps {
     categories: string[];
-    onSubmit: (answers: PlayerAnswers) => void;
+    answers: PlayerAnswers;
+    onAnswerChange: (answers: PlayerAnswers) => void;
+    isRoundOver: boolean;
 }
 
-const AnswerForm = ({ categories, onSubmit }: AnswerFormProps) => {
-    const [answers, setAnswers] = useState<PlayerAnswers>({});
-
+const AnswerForm = ({
+    categories,
+    answers,
+    onAnswerChange,
+    isRoundOver,
+}: AnswerFormProps) => {
     const handleChange = (category: string, value: string) => {
-        setAnswers(prevAnswers => ({
-            ...prevAnswers,
+        const newAnswers = {
+            ...answers,
             [category]: value,
-        }));
-    };
-
-    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        onSubmit(answers);
+        };
+        onAnswerChange(newAnswers);
     };
 
     return (
-        <form onSubmit={handleSubmit}>
-            {categories.map(category => (
-                <div key={category}>
-                    <label htmlFor={category}>{category}</label>
+        <form onSubmit={(e) => e.preventDefault()}>
+            {categories.map((category) => (
+                <div key={category} className="mb-3">
+                    <label
+                        htmlFor={category}
+                        className="block text-lg font-semibold mb-1"
+                    >
+                        {category}
+                    </label>
                     <input
                         id={category}
                         type="text"
                         onChange={(e) => handleChange(category, e.target.value)}
-                        value={answers[category] || ''}
+                        value={answers[category] || ""}
+                        disabled={isRoundOver}
+                        className="w-full px-4 py-2 text-black rounded-md border-2 border-gray-300 focus:border-yellow-500 focus:outline-none"
                     />
                 </div>
             ))}
-            {/* El botón de submit estará en el componente padre (PartyPage) */}
         </form>
     );
 };

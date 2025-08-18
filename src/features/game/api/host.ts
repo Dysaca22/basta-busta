@@ -1,12 +1,30 @@
-import { doc, runTransaction, serverTimestamp, collection, getDocs, writeBatch, increment, updateDoc, deleteDoc } from "firebase/firestore";
+import {
+    doc,
+    runTransaction,
+    serverTimestamp,
+    collection,
+    getDocs,
+    writeBatch,
+    increment,
+    updateDoc,
+    deleteDoc,
+} from "firebase/firestore";
 
 import { calculateRoundScores } from "@services/scoringService";
 import { getRandomLetter, generateGameId } from "@utils";
-import { type GameSettings, type Player } from "@types";
 import { db, auth } from "@config/firebase";
+import {
+    type GameSettings,
+    type Player,
+    type RoundData,
+    type PlayerRoundData,
+} from "@types";
 
 
-export const createGame = async (settings: GameSettings, playerName: string): Promise<string> => {
+export const createGame = async (
+    settings: GameSettings,
+    playerName: string
+): Promise<string> => {
     if (!db || !auth || !auth.currentUser) {
         throw new Error("Authentication or Firestore service is not available.");
     }
@@ -62,8 +80,8 @@ export const createGame = async (settings: GameSettings, playerName: string): Pr
 };
 
 export const startGame = async (gameId: string) => {
-
- if (!db || !auth || !auth.currentUser) throw new Error("Authentication or Firestore service is not available.");
+    if (!db || !auth || !auth.currentUser)
+        throw new Error("Authentication or Firestore service is not available.");
     const gameRef = doc(db!, "games", gameId);
     await updateDoc(gameRef, {
         status: "playing",
@@ -72,29 +90,51 @@ export const startGame = async (gameId: string) => {
     });
 };
 
-export const commitRoundScores = async (gameId: string, currentRound: number, players: Player[]) => {
-    if (!db || !auth || !auth.currentUser) throw new Error("Services not available.");
+export const commitRoundScores = async (
+    gameId: string,
+    currentRound: number,
+    players: Player[]
+) => {
+    if (!db || !auth || !auth.currentUser)
+        throw new Error("Services not available.");
 
-    const answersRef = collection(db, "games", gameId, "rounds", String(currentRound), "answers");
+    const answersRef = collection(
+        db,
+        "games",
+        gameId,
+        "rounds",
+        String(currentRound),
+        "answers"
+    );
     const answersSnapshot = await getDocs(answersRef);
 
-    const allAnswers: { playerId: string; answers: Record<string, string> }[] = [];
-    const allVotes: Record<string, any[]> = {};
+    const roundData: RoundData = { answers: {} };
 
     for (const answerDoc of answersSnapshot.docs) {
-        const playerData = answerDoc.data();
-        allAnswers.push({ playerId: answerDoc.id, answers: playerData.answers });
+        const answerData = answerDoc.data();
+        const playerId = answerDoc.id;
 
-        const votesSnapshot = await getDocs(collection(answerDoc.ref, "votes")); // This seems correct, answerDoc.ref is a DocumentReference
-        votesSnapshot.forEach(voteDoc => {
-            const voteData = voteDoc.data();
-            const voteKey = `${answerDoc.id}_${voteData.category}`;
-            if (!allVotes[voteKey]) allVotes[voteKey] = [];
-            allVotes[voteKey].push(voteData);
+        const playerRoundData: PlayerRoundData = {
+            playerId,
+            answers: answerData.answers,
+            votes: {},
+        };
+
+        const votesSnapshot = await getDocs(collection(answerDoc.ref, "votes"));
+        votesSnapshot.forEach((voteDoc) => {
+            const voterId = voteDoc.id;
+            playerRoundData.votes[voterId] = voteDoc.data();
         });
+
+        roundData.answers[playerId] = playerRoundData;
     }
 
-    const roundScores = calculateRoundScores(players, allAnswers, allVotes);
+    if (Object.keys(roundData.answers).length === 0) {
+        console.warn("No answers found for this round. Skipping score calculation.");
+        return;
+    }
+
+    const roundScores = calculateRoundScores(players, roundData);
     const batch = writeBatch(db!);
 
     for (const playerId in roundScores) {
@@ -108,17 +148,40 @@ export const commitRoundScores = async (gameId: string, currentRound: number, pl
     await batch.commit();
 };
 
-export const updateGameSettings = async (gameId: string, newSettings: GameSettings) => {
-    if (!db || !auth || !auth.currentUser) throw new Error("Services not available.");
-
-    // Aquí puedes añadir validaciones más robustas para los settings
+export const updateGameSettings = async (
+    gameId: string,
+    newSettings: GameSettings
+) => {
+    if (!db || !auth || !auth.currentUser)
+        throw new Error("Services not available.");
     const gameRef = doc(db, "games", gameId);
     await updateDoc(gameRef, { settings: newSettings });
 };
 
 export const kickPlayer = async (gameId: string, playerIdToKick: string) => {
-    if (!db || !auth || !auth.currentUser) throw new Error("Services not available.");
-
+    if (!db || !auth || !auth.currentUser)
+        throw new Error("Services not available.");
     const playerRef = doc(db, "games", gameId, "players", playerIdToKick);
-    await deleteDoc(playerRef); // Simplemente eliminamos el documento del jugador
+    await deleteDoc(playerRef);
+};
+
+export const advanceToNextRound = async (
+    gameId: string,
+    currentRound: number,
+    totalRounds: number
+) => {
+    if (!db) throw new Error("Firestore is not available.");
+    const gameRef = doc(db, "games", gameId);
+
+    if (currentRound >= totalRounds) {
+        await updateDoc(gameRef, {
+            status: "finished",
+        });
+    } else {
+        await updateDoc(gameRef, {
+            status: "playing",
+            currentRound: increment(1),
+            currentLetter: getRandomLetter(),
+        });
+    }
 };
