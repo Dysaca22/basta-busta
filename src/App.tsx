@@ -58,7 +58,7 @@ function App() {
     <BrowserRouter>
       <AppProvider>
         <SettingsProvider>
-          <div className="bg-gray-900 text-white min-h-screen font-sans">
+          <div className="bg-bg-100 text-text-100 min-h-screen font-sans">
             <main className="container mx-auto p-4">
               <AppRoutes />
             </main>
