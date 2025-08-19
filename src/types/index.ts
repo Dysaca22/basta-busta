@@ -6,6 +6,7 @@ export interface GameSettings {
     rounds: number;
     categories: string[];
     roundTime: number;
+    ratingTime: number;
 }
 
 export interface Game {
@@ -17,6 +18,7 @@ export interface Game {
     settings: GameSettings;
     lastActivity: any;
     finishedBy?: string;
+    votingOnPlayerIndex: number | null;
 }
 
 export interface Player {

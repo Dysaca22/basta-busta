@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
-import { type GameSettings } from '@types';
+
 import { updateGameSettings } from '@features/game/api/host';
 import { useDebounce } from '@hooks/useDebounce';
+import { type GameSettings } from '@types';
+
 
 interface GameSettingsFormProps {
     gameId: string;
@@ -21,6 +23,7 @@ const GameSettingsForm = ({ gameId, currentSettings }: GameSettingsFormProps) =>
         const hasChanged = JSON.stringify(debouncedSettings) !== JSON.stringify(currentSettings);
         const isValid = debouncedSettings.rounds > 0 &&
             debouncedSettings.roundTime > 10 &&
+            debouncedSettings.ratingTime > 0 &&
             debouncedSettings.categories.every(cat => cat.trim() !== '');
 
         if (hasChanged && isValid) {
@@ -69,6 +72,18 @@ const GameSettingsForm = ({ gameId, currentSettings }: GameSettingsFormProps) =>
                     step="5"
                     value={settings.roundTime}
                     onChange={(e) => setSettings({ ...settings, roundTime: Math.max(10, parseInt(e.target.value) || 30) })}
+                    className="w-full bg-gray-700 p-2 rounded mt-1 border border-gray-600 focus:ring-yellow-500 focus:border-yellow-500"
+                />
+            </div>
+            <div>
+                <label htmlFor="ratingTime" className="block text-sm font-medium text-gray-400">Tiempo de Calificación (segundos)</label>
+                <input
+                    id="ratingTime"
+                    type="number"
+                    min="1"
+                    step="5"
+                    value={settings.ratingTime}
+                    onChange={(e) => setSettings({ ...settings, ratingTime: Math.max(1, parseInt(e.target.value) || 1) })}
                     className="w-full bg-gray-700 p-2 rounded mt-1 border border-gray-600 focus:ring-yellow-500 focus:border-yellow-500"
                 />
             </div>

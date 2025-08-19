@@ -62,6 +62,7 @@ export const declareBasta = async (gameId: string) => {
     await updateDoc(gameRef, {
         status: "voting",
         finishedBy: auth.currentUser.uid,
+        votingOnPlayerIndex: 0,
         finishedAt: serverTimestamp()
     });
 };

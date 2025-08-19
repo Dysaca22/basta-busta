@@ -51,8 +51,9 @@ export const createGame = async (
                     hostId: hostId,
                     currentLetter: null,
                     currentRound: 0,
-                    settings: settings,
+                    settings: { ...settings, ratingTime: settings.ratingTime || 30 },
                     lastActivity: serverTimestamp(),
+                    votingOnPlayerIndex: null,
                 };
                 transaction.set(gameRef, initialGameData);
 
