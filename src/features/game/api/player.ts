@@ -1,4 +1,4 @@
-import { doc, runTransaction, updateDoc, serverTimestamp, setDoc, deleteDoc } from "firebase/firestore";
+import { doc, runTransaction, updateDoc, serverTimestamp, setDoc, deleteDoc, collection, query, where, getDocs, limit } from "firebase/firestore";
 
 import { type PlayerAnswers, type VoteType } from "@types";
 import { db, auth } from "@config/firebase";
@@ -45,6 +45,34 @@ export const joinGame = async (gameId: string, playerName: string) => {
     }
 };
 
+export const joinRandomGame = async (playerName: string): Promise<string | null> => {
+    if (!db || !auth || !auth.currentUser) {
+        throw new Error("Authentication or Firestore service is not available.");
+    }
+
+    const gamesRef = collection(db, "games");
+    const q = query(gamesRef, where("status", "==", "lobby"), limit(10)); // Limit to 10 lobbies to avoid querying all games
+
+    try {
+        const querySnapshot = await getDocs(q);
+        const availableGames = querySnapshot.docs;
+
+        if (availableGames.length === 0) {
+            return null; // No available games
+        }
+
+        // Pick a random game from the available ones
+        const randomGame = availableGames[Math.floor(Math.random() * availableGames.length)];
+        const gameId = randomGame.id;
+
+        await joinGame(gameId, playerName);
+        return gameId;
+    } catch (error) {
+        console.error("Error joining random game: ", error);
+        throw error;
+    }
+};
+
 export const setPlayerReady = async (gameId: string, isReady: boolean) => {
     if (!db || !auth || !auth.currentUser) {
         throw new Error("Authentication or Firestore service is not available.");
@@ -58,7 +86,7 @@ export const declareBasta = async (gameId: string) => {
         throw new Error("Authentication or Firestore service is not available.");
     }
     const gameRef = doc(db, "games", gameId);
-    
+
     await updateDoc(gameRef, {
         status: "voting",
         finishedBy: auth.currentUser.uid,
@@ -71,17 +99,17 @@ export const submitAnswers = async (gameId: string, currentRound: number, answer
     if (!db || !auth || !auth.currentUser) {
         throw new Error("Authentication or Firestore service is not available.");
     }
-    
+
     const answerRef = doc(
-        db, 
-        "games", gameId, 
-        "rounds", String(currentRound), 
+        db,
+        "games", gameId,
+        "rounds", String(currentRound),
         "answers", auth.currentUser.uid
     );
-    
-    await setDoc(answerRef, { 
+
+    await setDoc(answerRef, {
         playerId: auth.currentUser.uid,
-        answers 
+        answers
     });
 };
 
@@ -99,7 +127,7 @@ export const submitVote = async (
     if (auth.currentUser.uid === targetPlayerId) {
         throw new Error("You cannot vote for your own answers.");
     }
-    
+
     const voteRef = doc(
         db,
         "games", gameId,

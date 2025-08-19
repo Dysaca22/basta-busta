@@ -186,3 +186,29 @@ export const advanceToNextRound = async (
         });
     }
 };
+
+export const deleteGame = async (gameId: string) => {
+    if (!db) throw new Error("Firestore is not available.");
+    const gameRef = doc(db, "games", gameId);
+    
+    // Helper function to delete all documents in a collection
+    const deleteSubcollection = async (collectionName: string) => {
+        if (!db) throw new Error("Firestore is not available.");
+        const subcollectionRef = collection(db, "games", gameId, collectionName);
+        const snapshot = await getDocs(subcollectionRef);
+        if (snapshot.empty) return;
+        const batch = writeBatch(db);
+        snapshot.docs.forEach(doc => {
+            batch.delete(doc.ref);
+        });
+        await batch.commit();
+    };
+
+    // Delete known subcollections
+    await deleteSubcollection('players');
+    await deleteSubcollection('rounds'); // In case the host leaves after a round
+
+    // Finally, delete the game document itself
+    await deleteDoc(gameRef);
+    console.log(`Game ${gameId} and all its subcollections have been deleted.`);
+};

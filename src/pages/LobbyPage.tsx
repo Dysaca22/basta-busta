@@ -1,8 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 
+import { startGame, kickPlayer, deleteGame } from '@features/game/api/host';
 import { setPlayerReady, leaveGame } from '@features/game/api/player';
-import { startGame, kickPlayer } from '@features/game/api/host';
 import GameSettingsForm from '@components/ui/GameSettingsForm';
 import { useAppContext } from '@contexts/AppContext';
 import Modal from '@components/common/Modal';
@@ -17,6 +17,8 @@ const LobbyPage = () => {
     const navigate = useNavigate();
     const [showKickedModal, setShowKickedModal] = useState(false);
     const [copied, setCopied] = useState(false);
+
+    const isHost = user?.uid === game?.hostId;
 
     useEffect(() => {
         if (game?.status === 'playing' && gameId) {
@@ -34,6 +36,18 @@ const LobbyPage = () => {
     useEffect(() => {
         setShowKickedModal(false);
     }, [gameId]);
+
+    // Effect to handle host leaving
+    useEffect(() => {
+        return () => {
+            // This cleanup function runs when the component unmounts
+            if (isHost && gameId) {
+                console.log("Host is leaving. Deleting game...");
+                deleteGame(gameId);
+            }
+        };
+    }, [isHost, gameId]);
+
 
     const handleModalClose = () => {
         setShowKickedModal(false);
@@ -60,7 +74,6 @@ const LobbyPage = () => {
         return <div className="flex items-center justify-center h-screen font-marker text-4xl">Cargando lobby...</div>;
     }
 
-    const isHost = user.uid === game.hostId;
     const currentPlayer = players.find(p => p.id === user.uid);
     const nonHostPlayers = players.filter(p => !p.isHost);
     const allPlayersReady = nonHostPlayers.length > 0 && nonHostPlayers.every(p => p.isReady);

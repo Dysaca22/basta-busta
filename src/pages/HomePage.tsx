@@ -1,11 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 
+import { joinGame, joinRandomGame } from "@features/game/api/player";
 import { signInAnonymouslyIfNeeded } from "@features/auth/api";
 import SettingsModal from "@components/common/SettingsModal";
 import { useLocalStorage } from "@hooks/useLocalStorage";
 import { createGame } from "@features/game/api/host";
-import { joinGame } from "@features/game/api/player";
 
 import settingsIcon from '@assets/icons/settings.png';
 import logo from '@assets/images/logo.png';
@@ -15,6 +15,7 @@ const HomePage = () => {
     const [playerName, setPlayerName] = useLocalStorage("playerName", "");
     const [gameIdToJoin, setGameIdToJoin] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+    const [isJoiningRandom, setIsJoiningRandom] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const navigate = useNavigate();
 
@@ -55,6 +56,28 @@ const HomePage = () => {
         }
     };
 
+    const handleJoinRandomGame = async () => {
+        if (!playerName.trim()) {
+            alert("Por favor, introduce un nombre.");
+            return;
+        }
+        setIsJoiningRandom(true);
+        try {
+            await signInAnonymouslyIfNeeded(playerName);
+            const randomGameId = await joinRandomGame(playerName);
+            if (randomGameId) {
+                navigate(`/lobby?game=${randomGameId}`);
+            } else {
+                alert("No se encontraron partidas disponibles en este momento.");
+            }
+        } catch (error) {
+            console.error("Error al unirse a una partida aleatoria:", error);
+            alert("No se pudo unir a una partida aleatoria.");
+        } finally {
+            setIsJoiningRandom(false);
+        }
+    };
+
     return (
         <>
             <div className="absolute top-6 right-6">
@@ -76,15 +99,23 @@ const HomePage = () => {
                         onChange={(e) => setPlayerName(e.target.value)}
                         placeholder="Tu nombre de jugador"
                         className="w-full px-4 py-2 text-2xl bg-transparent border-b-4 border-text-200 text-center focus:outline-none focus:border-primary-100 font-handwriting tracking-wider"
-                        disabled={isLoading}
+                        disabled={isLoading || isJoiningRandom}
                     />
 
                     <button
                         onClick={handleCreateGame}
-                        disabled={isLoading || !playerName.trim()}
+                        disabled={isLoading || isJoiningRandom || !playerName.trim()}
                         className="w-full font-marker text-3xl bg-primary-100 text-bg-100 py-3 px-6 rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-150 disabled:opacity-50 disabled:scale-100"
                     >
                         {isLoading ? "Creando..." : "Crear Partida"}
+                    </button>
+
+                    <button
+                        onClick={handleJoinRandomGame}
+                        disabled={isLoading || isJoiningRandom || !playerName.trim()}
+                        className="w-full font-marker text-3xl bg-accent-200 text-white py-3 px-6 rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-150 disabled:opacity-50 disabled:scale-100"
+                    >
+                        {isJoiningRandom ? "Buscando..." : "Unirse a Sala Aleatoria"}
                     </button>
 
                     <div className="flex items-center space-x-2">
@@ -94,11 +125,11 @@ const HomePage = () => {
                             onChange={(e) => setGameIdToJoin(e.target.value.toUpperCase())}
                             placeholder="ID de la partida"
                             className="w-full px-4 py-2 text-2xl bg-transparent border-b-4 border-text-200 text-center focus:outline-none focus:border-accent-100 font-handwriting tracking-wider"
-                            disabled={isLoading}
+                            disabled={isLoading || isJoiningRandom}
                         />
                         <button
                             onClick={handleJoinGame}
-                            disabled={isLoading || !playerName.trim() || !gameIdToJoin.trim()}
+                            disabled={isLoading || isJoiningRandom || !playerName.trim() || !gameIdToJoin.trim()}
                             className="font-marker text-2xl bg-accent-100 text-bg-100 py-2 px-6 rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-150 disabled:opacity-50 disabled:scale-100"
                         >
                             Unirse
