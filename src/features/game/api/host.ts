@@ -189,24 +189,37 @@ export const advanceToNextRound = async (
 
 export const deleteGame = async (gameId: string) => {
     if (!db) throw new Error("Firestore is not available.");
+    console.log(`Starting deletion for game: ${gameId}`);
     const gameRef = doc(db, "games", gameId);
-    
-    // Helper function to delete all documents in a collection
-    const deleteSubcollection = async (collectionName: string) => {
-        if (!db) throw new Error("Firestore is not available.");
-        const subcollectionRef = collection(db, "games", gameId, collectionName);
-        const snapshot = await getDocs(subcollectionRef);
-        if (snapshot.empty) return;
-        const batch = writeBatch(db);
-        snapshot.docs.forEach(doc => {
-            batch.delete(doc.ref);
-        });
-        await batch.commit();
-    };
 
-    // Delete known subcollections
-    await deleteSubcollection('players');
-    await deleteSubcollection('rounds'); // In case the host leaves after a round
+    // Recursively delete subcollections
+    const roundsRef = collection(db, gameRef.path, 'rounds');
+    const roundsSnapshot = await getDocs(roundsRef);
+    for (const roundDoc of roundsSnapshot.docs) {
+        const answersRef = collection(db, roundDoc.ref.path, 'answers');
+        const answersSnapshot = await getDocs(answersRef);
+        for (const answerDoc of answersSnapshot.docs) {
+            const votesRef = collection(db, answerDoc.ref.path, 'votes');
+            const votesSnapshot = await getDocs(votesRef);
+            const batch = writeBatch(db);
+            votesSnapshot.forEach(voteDoc => batch.delete(voteDoc.ref));
+            await batch.commit();
+        }
+        const answersBatch = writeBatch(db);
+        answersSnapshot.forEach(answerDoc => answersBatch.delete(answerDoc.ref));
+        await answersBatch.commit();
+    }
+    const roundsBatch = writeBatch(db);
+    roundsSnapshot.forEach(roundDoc => roundsBatch.delete(roundDoc.ref));
+    await roundsBatch.commit();
+
+
+    // Delete players subcollection
+    const playersRef = collection(db, gameRef.path, 'players');
+    const playersSnapshot = await getDocs(playersRef);
+    const playersBatch = writeBatch(db);
+    playersSnapshot.forEach(playerDoc => playersBatch.delete(playerDoc.ref));
+    await playersBatch.commit();
 
     // Finally, delete the game document itself
     await deleteDoc(gameRef);
