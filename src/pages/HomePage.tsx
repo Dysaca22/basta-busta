@@ -7,6 +7,9 @@ import { useLocalStorage } from "@hooks/useLocalStorage";
 import { createGame } from "@features/game/api/host";
 import { joinGame } from "@features/game/api/player";
 
+import settingsIcon from '@assets/icons/settings.png';
+import logo from '@assets/images/logo.png';
+
 
 const HomePage = () => {
     const [playerName, setPlayerName] = useLocalStorage("playerName", "");
@@ -23,7 +26,7 @@ const HomePage = () => {
         setIsLoading(true);
         try {
             await signInAnonymouslyIfNeeded(playerName);
-            const settings = { rounds: 3, categories: ["Nombre", "Ciudad", "Animal"], roundTime: 60 };
+            const settings = { rounds: 3, categories: ["Nombre", "Ciudad", "Animal"], roundTime: 60, ratingTime: 30 };
             const newGameId = await createGame(settings, playerName);
             navigate(`/lobby?game=${newGameId}`);
         } catch (error) {
@@ -54,39 +57,50 @@ const HomePage = () => {
 
     return (
         <>
-            <div className="absolute top-4 right-4">
-                <button onClick={() => setIsSettingsOpen(true)} className="p-2 rounded-full hover:bg-gray-700">
-                    Config
+            <div className="absolute top-6 right-6">
+                <button onClick={() => setIsSettingsOpen(true)} className="p-2 rounded-full hover:bg-bg-200 transition-colors">
+                    <img src={settingsIcon} alt="Configuración" className="w-8 h-8" />
                 </button>
             </div>
 
-            <div className="flex flex-col items-center justify-center h-screen">
-                <h1 className="text-5xl font-bold mb-8">Basta! Busta!</h1>
+            <div className="flex flex-col items-center justify-center min-h-screen text-center">
+                <img src={logo} alt="Basta! Busta! Logo" className="w-48 h-48 mb-4" />
+                <h1 className="font-marker text-7xl text-primary-200 mb-12 transform -rotate-2" style={{ textShadow: '2px 2px #917800' }}>
+                    Basta! Busta!
+                </h1>
 
-                <div className="w-full max-w-sm">
+                <div className="w-full max-w-sm space-y-6">
                     <input
                         type="text"
                         value={playerName}
                         onChange={(e) => setPlayerName(e.target.value)}
                         placeholder="Tu nombre de jugador"
-                        className="w-full px-4 py-2 mb-4 text-black rounded"
+                        className="w-full px-4 py-2 text-2xl bg-transparent border-b-4 border-text-200 text-center focus:outline-none focus:border-primary-100 font-handwriting tracking-wider"
                         disabled={isLoading}
                     />
 
-                    <button onClick={handleCreateGame} disabled={isLoading} className="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-2">
+                    <button
+                        onClick={handleCreateGame}
+                        disabled={isLoading || !playerName.trim()}
+                        className="w-full font-marker text-3xl bg-primary-100 text-bg-100 py-3 px-6 rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-150 disabled:opacity-50 disabled:scale-100"
+                    >
                         {isLoading ? "Creando..." : "Crear Partida"}
                     </button>
 
-                    <div className="flex items-center mt-4">
+                    <div className="flex items-center space-x-2">
                         <input
                             type="text"
                             value={gameIdToJoin}
-                            onChange={(e) => setGameIdToJoin(e.target.value)}
+                            onChange={(e) => setGameIdToJoin(e.target.value.toUpperCase())}
                             placeholder="ID de la partida"
-                            className="w-full px-4 py-2 text-black rounded-l"
+                            className="w-full px-4 py-2 text-2xl bg-transparent border-b-4 border-text-200 text-center focus:outline-none focus:border-accent-100 font-handwriting tracking-wider"
                             disabled={isLoading}
                         />
-                        <button onClick={handleJoinGame} disabled={isLoading} className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-r">
+                        <button
+                            onClick={handleJoinGame}
+                            disabled={isLoading || !playerName.trim() || !gameIdToJoin.trim()}
+                            className="font-marker text-2xl bg-accent-100 text-bg-100 py-2 px-6 rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-150 disabled:opacity-50 disabled:scale-100"
+                        >
                             Unirse
                         </button>
                     </div>
